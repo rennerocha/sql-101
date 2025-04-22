@@ -117,6 +117,8 @@ INSERT INTO transactions (date, description, amount, cash_book_id) VALUES
 ('2025-05-17', 'Venda de Arduino usado', 80.00, 2),
 ('2025-06-25', 'Aluguel do espaço - Junho', -500.00, 3),
 ('2025-07-04', 'Mensalidade - Julho', 50.00, 1);
+('2025-04-22', '???', 99.99, 5);
+
 
 -- saldo final de 2024
 select sum(amount) as saldo_2025 from transactions where date >= '2025-01-01';
@@ -134,14 +136,14 @@ CREATE TABLE summary (
     expenses_2024 NUMERIC,
     expenses_2025 NUMERIC,
     incomes_2024 NUMERIC,
-    incomes_2025 NUMERIC,
+    incomes_2025 NUMERIC
 );
 
-SELECT FROM
-    (SELECT SUM(amount) FROM transactions WHERE amount < 0 AND strftime('%Y', date) = '2024') AS expenses_2024,
-    (SELECT SUM(amount) FROM transactions WHERE amount < 0 AND strftime('%Y', date) = '2025') AS expenses_2025,
-    (SELECT SUM(amount) FROM transactions WHERE amount > 0 AND strftime('%Y', date) = '2024') AS incomes_2024,
-    (SELECT SUM(amount) FROM transactions WHERE amount > 0 AND strftime('%Y', date) = '2025') AS incomes_2025;
+
+SELECT SUM(amount) FROM transactions WHERE amount < 0 AND strftime('%Y', date) = '2024';
+SELECT SUM(amount) FROM transactions WHERE amount < 0 AND strftime('%Y', date) = '2025';
+SELECT SUM(amount) FROM transactions WHERE amount > 0 AND strftime('%Y', date) = '2024';
+SELECT SUM(amount) FROM transactions WHERE amount > 0 AND strftime('%Y', date) = '2025';
 
 INSERT INTO summary (
     expenses_2024, expenses_2025, incomes_2024, incomes_2025)
@@ -156,31 +158,13 @@ VALUES (
     (SELECT SUM(amount) FROM transactions WHERE amount > 0 AND strftime('%Y', date) = '2025')
 );
 
--- percentual das despesas em 2024
--- percentual das despesas em 2025
--- percentual das receitas em 2024
--- percentual das receitas em 2025
--- variaçao percentual das receitas de 2024 para 2025
--- variaçao percentual das despesas de 2024 para 2025
--- 1. Percentual das despesas em 2024
-SELECT
-    (expenses_2024 * 100.0 / (expenses_2024 + expenses_2025)) AS percentage_expenses_2024
-FROM summary;
 
--- 2. Percentual das despesas em 2025
-SELECT
-    (expenses_2025 * 100.0 / (expenses_2024 + expenses_2025)) AS percentage_expenses_2025
-FROM summary;
-
--- 3. Percentual das receitas em 2024
-SELECT
-    (incomes_2024 * 100.0 / (incomes_2024 + incomes_2025)) AS percentage_incomes_2024
-FROM summary;
-
--- 4. Percentual das receitas em 2025
-SELECT
-    (incomes_2025 * 100.0 / (incomes_2024 + incomes_2025)) AS percentage_incomes_2025
-FROM summary;
+select
+   round((expenses_2024 * 100 / (expenses_2024 + expenses_2025)), 2) AS percentage_expenses_2024,
+   round((expenses_2025 * 100 / (expenses_2024 + expenses_2025)), 2) AS percentage_expenses_2025,
+   round((incomes_2024 * 100 / (incomes_2024 + incomes_2025)), 2) AS percentage_incomes_2024,
+   round((incomes_2025 * 100 / (incomes_2024 + incomes_2025)), 2) AS percentage_incomes_2025
+from summary
 
 -- 5. Variação percentual das receitas de 2024 para 2025
 SELECT
@@ -188,4 +172,66 @@ SELECT
 FROM summary;
 
 
--- quantos eventos no total
+CREATE TABLE cash_books (
+    id INTEGER PRIMARY KEY,
+    name TEXT
+);
+INSERT INTO cash_books VALUES
+(1, 'Conta Bradesco'),
+(2, 'Conta Cora'),
+(3, 'Conta Paypal'),
+(4, 'Dinheiro em espécie');
+
+
+SELECT
+  t.description,
+  t.cash_book_id,
+  c.name
+FROM
+  transactions as t
+JOIN
+  cash_books c ON t.cash_book_id = c.id
+
+
+SELECT
+  t.description,
+  t.cash_book_id,
+  c.name
+FROM
+  transactions as t
+RIGHT JOIN
+  cash_books c ON t.cash_book_id = c.id
+
+
+SELECT
+  t.description,
+  t.cash_book_id,
+  c.name
+FROM
+  transactions as t
+LEFT JOIN
+  cash_books c ON t.cash_book_id = c.id
+
+
+SELECT
+  t.description,
+  t.cash_book_id,
+  c.name
+FROM
+  transactions as t
+FULL OUTER JOIN
+  cash_books c ON t.cash_book_id = c.id
+
+
+
+
+CREATE TABLE transactions_b (
+    id INTEGER PRIMARY KEY,
+    date date NOT NULL,
+    description TEXT NOT NULL,
+    amount NUMERIC NOT NULL,
+    cash_book_id INTEGER,
+    FOREIGN KEY(cash_book_id) REFERENCES cash_books(id)
+);
+INSERT INTO transactions_b (date, description, amount, cash_book_id) VALUES
+('2024-01-10', 'Mensalidade - Janeiro', 50.00, 10);
